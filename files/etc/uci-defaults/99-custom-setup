@@ -1,0 +1,40 @@
+#!/bin/sh
+# 99-custom-setup
+# Runs once on first boot (uci-defaults). Sets:
+#  - hostname
+#  - Wi-Fi SSID/password on every radio/interface found
+#  - default LuCI language (Korean) and default theme (Argon)
+
+. /lib/functions.sh
+
+# ---- Hostname ----
+uci set system.@system[0].hostname='VPNBOX'
+uci commit system
+
+# ---- Wi-Fi: SSID/password on every wifi-iface, enable every radio ----
+set_wifi_iface() {
+	local section="$1"
+	uci set wireless."${section}".ssid='jina'
+	uci set wireless."${section}".encryption='psk2'
+	uci set wireless."${section}".key='min080603'
+	uci set wireless."${section}".disabled='0'
+}
+
+enable_wifi_device() {
+	local section="$1"
+	uci set wireless."${section}".disabled='0'
+}
+
+config_load wireless
+config_foreach set_wifi_iface wifi-iface
+config_foreach enable_wifi_device wifi-device
+uci commit wireless
+
+# ---- Default LuCI language: Korean ----
+uci set luci.main.lang='ko'
+
+# ---- Default LuCI theme: Argon ----
+uci set luci.main.mediaurlbase='/luci-static/argon'
+uci commit luci
+
+exit 0
