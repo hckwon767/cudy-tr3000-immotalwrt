@@ -23,6 +23,13 @@ if [ -d "$GITHUB_WORKSPACE/package/luci-compat-keep" ]; then
   cp -r "$GITHUB_WORKSPACE/package/luci-compat-keep" package/
 fi
 
+# Copy custom rootfs overlay (uci-defaults, first-boot settings, etc.) into
+# the OpenWrt tree so it gets baked into the firmware image.
+if [ -d "$GITHUB_WORKSPACE/files" ]; then
+  mkdir -p files
+  cp -r "$GITHUB_WORKSPACE/files/." files/
+fi
+
 git clone https://github.com/eamonxg/luci-theme-aurora package/luci-theme-aurora
 git clone https://github.com/eamonxg/luci-app-aurora-config package/luci-app-aurora-config
 git clone https://github.com/timsaya/luci-app-bandix package/luci-app-bandix
