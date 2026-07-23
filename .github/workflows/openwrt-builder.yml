@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       device:
-        description: '编译设备型号'
+        description: '빌드할 장치 모델'
         required: true
         type: choice
         default: 'all'
@@ -19,27 +19,27 @@ on:
           - '128M-Ubootmod'
           - 'all' 
       repo:
-        description: '指定源码仓库地址'
+        description: '소스 코드 저장소 주소 지정'
         required: true
         type: string
         default: 'https://github.com/padavanonly/immortalwrt-mt798x-6.6'
       commit:
-        description: '指定源码commit进行编译，留空拉取最新源码'
+        description: '빌드할 소스 코드 commit 지정 (비워두면 최신 소스를 가져옴)'
         required: false
         type: string
         default: ''
       ssh:
-        description: '是否执行 make menuconfig, 编译设备为 all 时无效'
+        description: 'make menuconfig 실행 여부 (장치가 all일 경우 무효)'
         required: false
         type: boolean
         default: false
       release:
-        description: '是否发布编译产物到 Release'
+        description: '빌드 결과물을 Release에 게시할지 여부'
         required: false
         type: boolean
         default: true
       prerelease:
-        description: '是否发布为预发布版本 (Pre-release)'
+        description: '프리릴리스(Pre-release)로 게시할지 여부'
         required: false
         type: boolean
         default: false
@@ -203,7 +203,7 @@ jobs:
       - name: 🔨 Multi-Device Compilation Loop
         id: compile
         run: |
-          # 1. 确定编译列表
+          # 1. 빌드할 장치 목록 결정
           if [ "${DEVICE_INPUT}" = "all" ]; then
             DEVICES="256M 128M 128M-Ubootmod"
           else
@@ -217,7 +217,7 @@ jobs:
           for DEV in $DEVICES; do
             echo "::group::🚀 Building $DEV"
             
-            # 2. 设置当前设备配置文件
+            # 2. 현재 장치의 설정 파일 지정
             case "$DEV" in
               "256M") CONFIG="config/256m.config" ;;
               "128M") CONFIG="config/128m.config" ;;
@@ -226,15 +226,15 @@ jobs:
             
             echo "Using Config: $CONFIG"
             
-            # 3. 加载配置
+            # 3. 설정 파일 적용
             cp -f $GITHUB_WORKSPACE/$CONFIG .config
             
-            # 4. 刷新配置并下载
+            # 4. 설정 갱신 및 소스 다운로드
             make defconfig
             make download -j$(nproc)
             
-            # 5. 开始编译
-            # 使用 ccache 加速，并保留 Toolchain
+            # 5. 빌드 시작
+            # ccache로 속도 향상, 툴체인은 재사용
             if ! make -j$(nproc) CC="ccache gcc" CXX="ccache g++"; then
               echo "⚠️ Multi-threaded failed, retrying single-threaded..."
               make -j1 V=s || exit 1
