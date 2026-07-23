@@ -1,6 +1,10 @@
 #!/bin/sh
-# 99-custom-setup
-# Runs once on first boot (uci-defaults). Sets:
+# 999-custom-setup
+# Runs once on first boot (uci-defaults). Named "999-" (rather than "99-")
+# so it runs AFTER the stock ImmortalWrt "99-default-settings" script, which
+# would otherwise reset luci.main.lang back to "auto" on its own first run.
+#
+# Sets:
 #  - hostname
 #  - Wi-Fi SSID/password on every radio/interface found
 #  - default LuCI language (Korean) and default theme (Argon)
@@ -33,8 +37,14 @@ uci commit wireless
 # ---- Default LuCI language: Korean ----
 uci set luci.main.lang='ko'
 
+# Defensive marker: stops the stock "99-default-settings" uci-defaults
+# script from resetting luci.main.lang to "auto" if ordering ever changes.
+uci -q get system.@imm_init[0] > /dev/null || uci -q add system imm_init > /dev/null
+uci set system.@imm_init[0].lang='1'
+
 # ---- Default LuCI theme: Argon ----
 uci set luci.main.mediaurlbase='/luci-static/argon'
 uci commit luci
+uci commit system
 
 exit 0
